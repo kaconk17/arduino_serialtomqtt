@@ -8,18 +8,18 @@ from paho.mqtt import client as mqtt_client
 
 load_dotenv()
 
-
-arduino = serial.Serial(port='/dev/cu.usbserial-14220', baudrate=19200, timeout=.1)
-starttime = time.time()
-scheduler = BackgroundScheduler()
-
 broker = os.getenv('BROKER')
 port = int(os.getenv('PORT'))
 topic = 'smarthome/power'
 client_id = 'kwh01'
 username = os.getenv('USERNAME')
 password = os.getenv('PASSWORD')
+device = os.getenv('DEVICE')
+baudrate = os.getenv('BAUDRATE')
 
+starttime = time.time()
+scheduler = BackgroundScheduler()
+arduino = serial.Serial(port=device, baudrate=baudrate, timeout=.1)
 
 def connect_mqtt():
     def on_connect(client, userdata, flags, rc):
@@ -28,7 +28,7 @@ def connect_mqtt():
             if scheduler.running:
                 scheduler.resume()
             else:
-                scheduler.add_job(write_read, args=['1'],trigger='interval', seconds=10)
+                scheduler.add_job(write_read, args=[client],trigger='interval', seconds=10)
                 scheduler.start()
             print('Press Ctrl+{0} to exit'.format('Break' if os.name == 'nt' else 'C'))
             
@@ -46,33 +46,21 @@ def connect_mqtt():
     client.connect(broker, port)
     return client
 
-def write_read(x):
-    data = ""
+def write_read(_clnt):
+   
     try:
-        arduino.write(bytes(x, 'utf-8'))
+        arduino.write(bytes('1', 'utf-8'))
         time.sleep(0.05)
         data = arduino.readline()
+        y = json.loads(data)
+        _clnt.publish(topic+'/'+client_id,data)
+        #print(broker + str(y["voltage"]))
     except serial.SerialException as e:
         print("Koneksi serial arduino error :", str(e))
-    y = json.loads(data)
-    print(broker + str(y["voltage"]))
 
 if __name__ == '__main__':
     client = connect_mqtt()
     client.loop_start()
-    #scheduler = BackgroundScheduler()
-    #scheduler.add_job(write_read, args=['1'],trigger='interval', seconds=10)
-    #scheduler.start()
-    #print('Press Ctrl+{0} to exit'.format('Break' if os.name == 'nt' else 'C'))
-
-    """try:
-        # This is here to simulate application activity (which keeps the main thread alive).
-        while True:
-            time.sleep(2)
-    except (KeyboardInterrupt, SystemExit):
-        # Not strictly necessary if daemonic mode is enabled but should be done if possible
-        scheduler.shutdown()
-    """
     try:
         while True:
             time.sleep(1)
