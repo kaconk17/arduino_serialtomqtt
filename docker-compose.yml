@@ -1,0 +1,18 @@
+version: '3'
+
+services:
+  app:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    image: arduino_serial
+    container_name: arduino_serial
+    restart: unless-stopped
+    devices:
+      - /dev/ttyUSB0:/dev/ttyUSB0
+    networks:
+      - mynet
+
+networks:
+  mynet:
+    name: iot_net

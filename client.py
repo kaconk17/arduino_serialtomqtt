@@ -1,5 +1,4 @@
 import serial
-import json
 import time
 import os
 from apscheduler.schedulers.background import BackgroundScheduler
@@ -52,7 +51,7 @@ def write_read(_clnt):
         arduino.write(bytes('1', 'utf-8'))
         time.sleep(0.05)
         data = arduino.readline()
-        y = json.loads(data)
+        #y = json.loads(data)
         _clnt.publish(topic+'/'+client_id,data)
         #print(broker + str(y["voltage"]))
     except serial.SerialException as e:
