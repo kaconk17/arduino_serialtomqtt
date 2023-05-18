@@ -8,6 +8,8 @@ services:
     image: arduino_serial
     container_name: arduino_serial
     restart: unless-stopped
+    env_file:
+      - ./.env
     devices:
       - /dev/ttyUSB0:/dev/ttyUSB0
     networks:
